@@ -1,0 +1,151 @@
+{
+  "name": "victory36",
+  "version": "1.0.0",
+  "description": "Victory36: Advanced AI Agent Ecosystem Management Platform for 20M+ concurrent agents",
+  "main": "src/victory36-connection-pool-manager.js",
+  "scripts": {
+    "start": "./victory36-awakening-ceremony.sh",
+    "dev": "node src/victory36-connection-pool-manager.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src/ --ext .js",
+    "lint:fix": "eslint src/ --ext .js --fix",
+    "format": "prettier --write 'src/**/*.js'",
+    "build": "npm run lint && npm run test",
+    "deploy:canary": "./scripts/deploy-canary.sh",
+    "deploy:production": "./scripts/deploy-production.sh",
+    "health-check": "./scripts/health-check.sh",
+    "rollback": "./scripts/revert-v36.sh",
+    "docs:generate": "jsdoc -c jsdoc.json",
+    "security:scan": "npm audit",
+    "precommit": "npm run lint && npm run test",
+    "postinstall": "echo 'Victory36 dependencies installed. Diamond SAO access required.'"
+  },
+  "keywords": [
+    "ai-agents",
+    "connection-pool",
+    "scalability",
+    "diamond-sao",
+    "asoos",
+    "cloud-native",
+    "microservices",
+    "high-performance"
+  ],
+  "author": "ASOOS Infrastructure Team",
+  "license": "PROPRIETARY",
+  "private": true,
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "winston": "^3.10.0",
+    "prometheus-client": "^14.2.0",
+    "ioredis": "^5.3.2",
+    "helmet": "^7.0.0",
+    "cors": "^2.8.5",
+    "compression": "^1.7.4",
+    "dotenv": "^16.3.1",
+    "jsonwebtoken": "^9.0.1",
+    "bcrypt": "^5.1.0",
+    "joi": "^17.9.2",
+    "node-cron": "^3.0.2",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.6.1",
+    "eslint": "^8.45.0",
+    "prettier": "^3.0.0",
+    "nodemon": "^3.0.1",
+    "supertest": "^6.3.3",
+    "jsdoc": "^4.0.2",
+    "husky": "^8.0.3",
+    "lint-staged": "^13.2.3",
+    "@types/node": "^20.4.5",
+    "artillery": "^2.0.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/**/*.test.js"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 85,
+        "functions": 85,
+        "lines": 85,
+        "statements": 85
+      }
+    },
+    "testMatch": [
+      "**/tests/**/*.test.js",
+      "**/src/**/*.test.js"
+    ]
+  },
+  "eslintConfig": {
+    "env": {
+      "node": true,
+      "es2021": true,
+      "jest": true
+    },
+    "extends": [
+      "eslint:recommended"
+    ],
+    "parserOptions": {
+      "ecmaVersion": 12,
+      "sourceType": "module"
+    },
+    "rules": {
+      "indent": ["error", 2],
+      "linebreak-style": ["error", "unix"],
+      "quotes": ["error", "single"],
+      "semi": ["error", "always"],
+      "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+      "no-console": ["warn", { "allow": ["warn", "error"] }],
+      "prefer-const": "error",
+      "no-var": "error"
+    }
+  },
+  "prettier": {
+    "semi": true,
+    "trailingComma": "es5",
+    "singleQuote": true,
+    "printWidth": 100,
+    "tabWidth": 2,
+    "useTabs": false
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "prettier --write",
+      "git add"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "pre-push": "npm run test"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:asoos/victory36-private.git"
+  },
+  "bugs": {
+    "url": "https://github.com/asoos/victory36-private/issues"
+  },
+  "homepage": "https://github.com/asoos/victory36-private#readme",
+  "funding": {
+    "type": "corporate",
+    "url": "https://asoos.cloud/infrastructure"
+  },
+  "config": {
+    "diamond_sao_required": true,
+    "max_agents": 20000000,
+    "supported_regions": ["MOCOA", "MOCORIX", "MOCORIX2"],
+    "security_classification": "DIAMOND_SAO"
+  }
+}
