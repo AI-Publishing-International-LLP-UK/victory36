@@ -8,8 +8,9 @@ const EventEmitter = require('events');
 const crypto = require('crypto');
 
 // Diamond SAO Security Constants (These should be moved to environment variables in production)
-const DIAMOND_SAO_KEY_ID = process.env.DIAMOND_SAO_KEY_ID || 'v36-default-key';
-const ENCRYPTION_ALGORITHM = 'aes-256-gcm';
+// Note: These constants are reserved for future encryption features
+// const DIAMOND_SAO_KEY_ID = process.env.DIAMOND_SAO_KEY_ID || 'v36-default-key';
+// const ENCRYPTION_ALGORITHM = 'aes-256-gcm';
 const MAX_AGENTS = 20000000; // 20 million agents
 const REGIONS = ['MOCOA', 'MOCORIX', 'MOCORIX2'];
 
@@ -236,8 +237,8 @@ class ConnectionPool extends EventEmitter {
   }
   
   async initialize() {
-    console.log(`🚀 Initializing connection pool for region: ${this.config.region}`);
-    console.log('📊 Pool configuration:', {
+    console.warn(`🚀 Initializing connection pool for region: ${this.config.region}`);
+    console.warn('📊 Pool configuration:', {
       region: this.config.region,
       minConnections: this.config.minConnections,
       maxConnections: this.config.maxConnections
@@ -253,7 +254,7 @@ class ConnectionPool extends EventEmitter {
       this.performHealthCheck();
     }, this.config.healthCheckInterval);
     
-    console.log(`✅ Connection pool initialized for ${this.config.region} with ${this.connections.size} connections`);
+    console.warn(`✅ Connection pool initialized for ${this.config.region} with ${this.connections.size} connections`);
     this.emit('initialized', { region: this.config.region, connections: this.connections.size });
   }
   
@@ -491,8 +492,8 @@ class Victory36ConnectionPoolManager extends EventEmitter {
   }
   
   async initialize() {
-    console.log('🌟 Initializing Victory36 Connection Pool Manager');
-    console.log(`📊 Configuration: ${this.config.maxAgents} max agents across ${this.config.regions.length} regions`);
+    console.warn('🌟 Initializing Victory36 Connection Pool Manager');
+    console.warn(`📊 Configuration: ${this.config.maxAgents} max agents across ${this.config.regions.length} regions`);
     
     // Initialize connection pools for each region
     const poolPromises = this.config.regions.map(async (region) => {
@@ -510,12 +511,12 @@ class Victory36ConnectionPoolManager extends EventEmitter {
       this.pools.set(region, pool);
       
       // Forward pool events
-      pool.on('connection-created', (connection) => {
+      pool.on('connection-created', (_connection) => {
         this.metricsCollector.recordConnection(region, 'open');
         this.healthMonitor.recordMetric(region, 'connections', pool.connections.size);
       });
       
-      pool.on('connection-removed', (connection) => {
+      pool.on('connection-removed', (_connection) => {
         this.metricsCollector.recordConnection(region, 'close');
         this.healthMonitor.recordMetric(region, 'connections', pool.connections.size);
       });
@@ -528,7 +529,7 @@ class Victory36ConnectionPoolManager extends EventEmitter {
     // Start monitoring
     this.startMonitoring();
     
-    console.log('🎉 Victory36 Connection Pool Manager initialized successfully');
+    console.warn('🎉 Victory36 Connection Pool Manager initialized successfully');
     this.emit('initialized', {
       regions: this.config.regions,
       totalPools: this.pools.size,
@@ -562,8 +563,9 @@ class Victory36ConnectionPoolManager extends EventEmitter {
   async getConnection(agentId, options = {}) {
     const {
       agentTier = AGENT_TIERS.STANDARD,
-      preferredRegion = null,
-      timeout = 5000
+      preferredRegion = null
+      // timeout reserved for future use
+      // timeout = 5000
     } = options;
     
     const startTime = Date.now();
@@ -631,7 +633,7 @@ class Victory36ConnectionPoolManager extends EventEmitter {
     }
   }
   
-  selectOptimalRegion(agentId, preferredRegion, agentTier) {
+  selectOptimalRegion(agentId, preferredRegion, _agentTier) {
     // If preferred region is specified and healthy, use it
     if (preferredRegion && this.pools.has(preferredRegion)) {
       const health = this.healthMonitor.getPoolHealth(preferredRegion);
@@ -764,7 +766,7 @@ class Victory36ConnectionPoolManager extends EventEmitter {
       }
     };
     
-    console.log('📊 Victory36 System Health Report:', {
+    console.warn('📊 Victory36 System Health Report:', {
       status: systemHealth.status,
       healthyRegions: `${systemHealth.healthyRegions}/${systemHealth.totalRegions}`,
       utilization: `${systemHealth.capacity.utilizationPercentage.toFixed(2)}%`,
@@ -802,7 +804,7 @@ class Victory36ConnectionPoolManager extends EventEmitter {
   }
   
   async shutdown() {
-    console.log('🔄 Shutting down Victory36 Connection Pool Manager...');
+    console.warn('🔄 Shutting down Victory36 Connection Pool Manager...');
     
     // Destroy all pools
     const shutdownPromises = Array.from(this.pools.values()).map(pool => {
@@ -816,7 +818,7 @@ class Victory36ConnectionPoolManager extends EventEmitter {
     
     this.pools.clear();
     
-    console.log('✅ Victory36 Connection Pool Manager shutdown complete');
+    console.warn('✅ Victory36 Connection Pool Manager shutdown complete');
     this.emit('shutdown');
   }
 }
@@ -841,14 +843,14 @@ if (require.main === module) {
   });
   
   manager.on('initialized', async () => {
-    console.log('🧪 Running connection pool tests...');
+    console.warn('🧪 Running connection pool tests...');
     
     try {
       // Test standard agent connection
       const connection1 = await manager.getConnection('agent-001', {
         agentTier: 'STANDARD'
       });
-      console.log('✅ Standard agent connection successful');
+      console.warn('✅ Standard agent connection successful');
       connection1.release();
       
       // Test Elite 11 agent connection
@@ -856,12 +858,12 @@ if (require.main === module) {
         agentTier: 'ELITE_11',
         preferredRegion: 'MOCOA'
       });
-      console.log('✅ Elite 11 agent connection successful');
+      console.warn('✅ Elite 11 agent connection successful');
       connection2.release();
       
       // Test system stats
       const stats = manager.getSystemStats();
-      console.log('📊 System Stats:', JSON.stringify(stats, null, 2));
+      console.warn('📊 System Stats:', JSON.stringify(stats, null, 2));
       
     } catch (error) {
       console.error('❌ Test failed:', error);
