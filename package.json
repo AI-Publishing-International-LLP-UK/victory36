@@ -9,8 +9,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "lint": "eslint src/ --ext .js",
-    "lint:fix": "eslint src/ --ext .js --fix",
+    "lint": "eslint src/**/*.js",
+    "lint:fix": "eslint src/**/*.js --fix",
     "format": "prettier --write 'src/**/*.js'",
     "build": "npm run lint && npm run test",
     "deploy:canary": "./scripts/deploy-canary.sh",
@@ -42,7 +42,7 @@
   "dependencies": {
     "express": "^4.18.2",
     "winston": "^3.10.0",
-    "prometheus-client": "^14.2.0",
+    "prom-client": "^14.2.0",
     "ioredis": "^5.3.2",
     "helmet": "^7.0.0",
     "cors": "^2.8.5",
@@ -84,30 +84,6 @@
       "**/tests/**/*.test.js",
       "**/src/**/*.test.js"
     ]
-  },
-  "eslintConfig": {
-    "env": {
-      "node": true,
-      "es2021": true,
-      "jest": true
-    },
-    "extends": [
-      "eslint:recommended"
-    ],
-    "parserOptions": {
-      "ecmaVersion": 12,
-      "sourceType": "module"
-    },
-    "rules": {
-      "indent": ["error", 2],
-      "linebreak-style": ["error", "unix"],
-      "quotes": ["error", "single"],
-      "semi": ["error", "always"],
-      "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
-      "no-console": ["warn", { "allow": ["warn", "error"] }],
-      "prefer-const": "error",
-      "no-var": "error"
-    }
   },
   "prettier": {
     "semi": true,

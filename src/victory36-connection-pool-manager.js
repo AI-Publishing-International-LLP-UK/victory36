@@ -58,21 +58,21 @@ class HealthMonitor extends EventEmitter {
     const poolMetrics = this.metrics.get(poolId);
     
     switch (metric) {
-      case 'latency':
-        poolMetrics.latency.push(value);
-        if (poolMetrics.latency.length > 100) {
-          poolMetrics.latency.shift(); // Keep only last 100 measurements
-        }
-        break;
-      case 'success':
-        poolMetrics.successRate = value;
-        break;
-      case 'error':
-        poolMetrics.errorRate = value;
-        break;
-      case 'connections':
-        poolMetrics.connectionCount = value;
-        break;
+    case 'latency':
+      poolMetrics.latency.push(value);
+      if (poolMetrics.latency.length > 100) {
+        poolMetrics.latency.shift(); // Keep only last 100 measurements
+      }
+      break;
+    case 'success':
+      poolMetrics.successRate = value;
+      break;
+    case 'error':
+      poolMetrics.errorRate = value;
+      break;
+    case 'connections':
+      poolMetrics.connectionCount = value;
+      break;
     }
     
     poolMetrics.lastUpdated = Date.now();
@@ -151,21 +151,21 @@ class MetricsCollector {
     const regionStats = this.regionMetrics.get(region);
     
     switch (action) {
-      case 'open':
-        this.metrics.activeConnections++;
-        this.metrics.totalConnections++;
-        regionStats.activeConnections++;
-        regionStats.totalConnections++;
+    case 'open':
+      this.metrics.activeConnections++;
+      this.metrics.totalConnections++;
+      regionStats.activeConnections++;
+      regionStats.totalConnections++;
         
-        if (this.metrics.activeConnections > this.metrics.peakConnections) {
-          this.metrics.peakConnections = this.metrics.activeConnections;
-        }
-        break;
+      if (this.metrics.activeConnections > this.metrics.peakConnections) {
+        this.metrics.peakConnections = this.metrics.activeConnections;
+      }
+      break;
         
-      case 'close':
-        this.metrics.activeConnections--;
-        regionStats.activeConnections--;
-        break;
+    case 'close':
+      this.metrics.activeConnections--;
+      regionStats.activeConnections--;
+      break;
     }
   }
   
@@ -237,7 +237,7 @@ class ConnectionPool extends EventEmitter {
   
   async initialize() {
     console.log(`🚀 Initializing connection pool for region: ${this.config.region}`);
-    console.log(`📊 Pool configuration:`, {
+    console.log('📊 Pool configuration:', {
       region: this.config.region,
       minConnections: this.config.minConnections,
       maxConnections: this.config.maxConnections
@@ -382,13 +382,13 @@ class ConnectionPool extends EventEmitter {
   
   getAgentPriority(agentTier) {
     switch (agentTier) {
-      case AGENT_TIERS.ELITE_11:
-        return 10;
-      case AGENT_TIERS.MASTERY_33:
-        return 5;
-      case AGENT_TIERS.STANDARD:
-      default:
-        return 0;
+    case AGENT_TIERS.ELITE_11:
+      return 10;
+    case AGENT_TIERS.MASTERY_33:
+      return 5;
+    case AGENT_TIERS.STANDARD:
+    default:
+      return 0;
     }
   }
   
@@ -642,15 +642,15 @@ class Victory36ConnectionPoolManager extends EventEmitter {
     
     // Select region based on load balancing strategy
     switch (this.config.loadBalancingStrategy) {
-      case 'least-connections':
-        return this.selectLeastConnectionsRegion();
+    case 'least-connections':
+      return this.selectLeastConnectionsRegion();
       
-      case 'regional-affinity':
-        return this.selectRegionalAffinityRegion(agentId);
+    case 'regional-affinity':
+      return this.selectRegionalAffinityRegion(agentId);
       
-      case 'round-robin':
-      default:
-        return this.selectRoundRobinRegion();
+    case 'round-robin':
+    default:
+      return this.selectRoundRobinRegion();
     }
   }
   
@@ -764,7 +764,7 @@ class Victory36ConnectionPoolManager extends EventEmitter {
       }
     };
     
-    console.log(`📊 Victory36 System Health Report:`, {
+    console.log('📊 Victory36 System Health Report:', {
       status: systemHealth.status,
       healthyRegions: `${systemHealth.healthyRegions}/${systemHealth.totalRegions}`,
       utilization: `${systemHealth.capacity.utilizationPercentage.toFixed(2)}%`,
