@@ -1,0 +1,19 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Install dependencies
+COPY requirements_time_presser.txt .
+RUN pip install --no-cache-dir -r requirements_time_presser.txt
+
+# Copy the time presser service code
+COPY victory36_time_presser.py .
+
+# Create necessary directories
+RUN mkdir -p /mnt/simulation-data /mnt/time-presser-cache
+
+# Expose ports
+EXPOSE 8080 9090
+
+# Run the service
+CMD ["python", "victory36_time_presser.py"]

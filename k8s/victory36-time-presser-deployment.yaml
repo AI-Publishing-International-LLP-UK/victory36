@@ -9,7 +9,7 @@ metadata:
     version: v1.0.0
     security-classification: diamond-sao
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: victory36-cybersecurity-simulation
@@ -81,11 +81,11 @@ spec:
               key: diamond-sao-token
         resources:
           requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
             memory: "4Gi"
             cpu: "2000m"
-          limits:
-            memory: "16Gi"
-            cpu: "8000m"
         volumeMounts:
         - name: simulation-data
           mountPath: /mnt/simulation-data

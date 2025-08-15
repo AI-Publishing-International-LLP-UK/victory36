@@ -1,0 +1,13 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: 
+      - 'build'
+      - '-f'
+      - 'Dockerfile.dr_lucy_fixed'
+      - '-t'
+      - 'gcr.io/api-for-warp-drive/dr-lucy-predictions-fixed:latest'
+      - '.'
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/api-for-warp-drive/dr-lucy-predictions-fixed:latest']
+images:
+  - 'gcr.io/api-for-warp-drive/dr-lucy-predictions-fixed:latest'
