@@ -1,0 +1,137 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: victory36-connection-pool-netpol
+  namespace: victory36
+  labels:
+    app: victory36-connection-pool
+    component: security
+    classification: diamond-sao
+  annotations:
+    asoos.cloud/purpose: "diamond-sao-network-security"
+    asoos.cloud/security-level: "maximum"
+spec:
+  podSelector:
+    matchLabels:
+      app: victory36-connection-pool
+  policyTypes:
+    - Ingress
+    - Egress
+  
+  # Ingress rules - only allow specific sources
+  ingress:
+    # Allow health checks from GKE
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+      ports:
+        - protocol: TCP
+          port: 8080  # Health check port
+    
+    # Allow metrics scraping from monitoring
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+        - podSelector:
+            matchLabels:
+              app: prometheus
+      ports:
+        - protocol: TCP
+          port: 9090  # Metrics port
+    
+    # Allow traffic from Istio ingress gateway
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: istio-system
+        - podSelector:
+            matchLabels:
+              app: istio-proxy
+      ports:
+        - protocol: TCP
+          port: 3000  # Application port
+    
+    # Allow internal Victory36 communication
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: victory36
+        - podSelector:
+            matchLabels:
+              classification: diamond-sao
+      ports:
+        - protocol: TCP
+          port: 3000
+    
+    # Allow ASOOS integration gateway
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: integration-gateway
+        - podSelector:
+            matchLabels:
+              app: gateway-router
+      ports:
+        - protocol: TCP
+          port: 3000
+  
+  # Egress rules - restrict outbound traffic
+  egress:
+    # Allow DNS resolution
+    - to: []
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    
+    # Allow HTTPS for GCP APIs
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 443
+    
+    # Allow connection to other Victory36 pods
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: victory36
+        - podSelector:
+            matchLabels:
+              app: victory36-connection-pool
+      ports:
+        - protocol: TCP
+          port: 3000
+    
+    # Allow connection to MongoDB (agent data)
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: data
+        - podSelector:
+            matchLabels:
+              app: mongodb
+      ports:
+        - protocol: TCP
+          port: 27017
+    
+    # Allow connection to Redis (caching)
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: cache
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    
+    # Allow connection to Pinecone (vector operations)
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 443
+      # This allows outbound HTTPS to Pinecone API endpoints

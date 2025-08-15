@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: victory36
+  labels:
+    name: victory36
+    classification: diamond-sao
+    component: victory36
+    managed-by: terraform
+    istio-injection: enabled
+  annotations:
+    asoos.cloud/classification: "diamond-sao"
+    asoos.cloud/purpose: "20M+ AI agent connection pooling"
+    asoos.cloud/security-level: "maximum"
+    asoos.cloud/data-residency: "us-west1,us-central1"

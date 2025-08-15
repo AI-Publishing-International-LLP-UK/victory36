@@ -1,0 +1,112 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: victory36-mocoa
+  annotations:
+    config.kubernetes.io/local-config: "true"
+
+# Base resources
+resources:
+  - ../../base
+
+# Region-specific configuration
+namespace: victory36
+
+# Replace deployment type in templates
+replacements:
+  - source:
+      kind: ConfigMap
+      name: region-config
+      fieldPath: data.DEPLOYMENT_TYPE
+    targets:
+      - select:
+          kind: Deployment
+          name: victory36-connection-pool
+        fieldPaths:
+          - spec.template.spec.containers.[name=victory36-connection-pool].env.[name=DEPLOYMENT_TYPE].value
+      - select:
+          kind: ServiceAccount
+          name: victory36-connection-pool
+        fieldPaths:
+          - metadata.annotations.[iam.gke.io/gcp-service-account]
+
+# Patches for MOCOA-specific configuration
+patches:
+  # MOCOA deployment configuration
+  - target:
+      kind: Deployment
+      name: victory36-connection-pool
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 5  # Higher replica count for client-facing region
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "3000m"  # More CPU for client handling
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "6Gi"    # More memory for client connections
+      - op: replace
+        path: /spec/template/spec/containers/0/env/1/value
+        value: "6666667"  # 20M / 3 regions
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: LOAD_BALANCING_STRATEGY
+          value: "least-connections"
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: FAILOVER_ENABLED
+          value: "true"
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: REGION_TYPE
+          value: "CLIENT_FACING"
+
+  # HPA scaling for MOCOA (client-facing workloads)
+  - target:
+      kind: HorizontalPodAutoscaler
+      name: victory36-connection-pool-hpa
+    patch: |-
+      - op: replace
+        path: /spec/maxReplicas
+        value: 150  # Higher max for client-facing region
+      - op: replace
+        path: /spec/metrics/2/object/target/averageValue
+        value: "150000"  # 150K connections per pod (more client load)
+
+# ConfigMap for region-specific settings
+configMapGenerator:
+  - name: region-config
+    literals:
+      - DEPLOYMENT_TYPE=MOCOA
+      - REGION=us-west1
+      - ZONE=us-west1-b
+      - CLUSTER_TYPE=autopilot
+      - PURPOSE=client-facing-deployment
+      - GKE_CLUSTER=victory36-mocoa
+      - MAX_AGENTS_PER_REGION=6666667
+
+# Secret for region-specific credentials
+secretGenerator:
+  - name: victory36-mocoa-secrets
+    envs:
+      - mocoa.env
+    type: Opaque
+
+# Labels for MOCOA region
+commonLabels:
+  deployment-type: mocoa
+  region: us-west1
+  purpose: client-facing
+
+# Additional annotations for MOCOA
+commonAnnotations:
+  asoos.cloud/region: "us-west1"
+  asoos.cloud/zone: "us-west1-b"
+  asoos.cloud/purpose: "client-facing-deployment"
+  asoos.cloud/cluster-type: "autopilot"
+  asoos.cloud/max-agents: "6666667"

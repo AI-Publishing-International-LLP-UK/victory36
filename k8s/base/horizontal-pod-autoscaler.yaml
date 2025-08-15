@@ -1,0 +1,96 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: victory36-connection-pool-hpa
+  namespace: victory36
+  labels:
+    app: victory36-connection-pool
+    component: autoscaler
+    classification: diamond-sao
+  annotations:
+    asoos.cloud/purpose: "20M+ agent connection pool autoscaling"
+    asoos.cloud/target-agents: "20000000"
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: victory36-connection-pool
+  
+  minReplicas: 3
+  maxReplicas: 100  # Scale up to 100 pods for 20M agents
+  
+  metrics:
+    # CPU utilization target
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    
+    # Memory utilization target
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+    
+    # Custom metric: Active agent connections
+    - type: Object
+      object:
+        metric:
+          name: victory36_active_connections
+          selector:
+            matchLabels:
+              app: victory36-connection-pool
+        target:
+          type: AverageValue
+          averageValue: "200000"  # 200K connections per pod
+    
+    # Custom metric: Connection pool utilization
+    - type: Object
+      object:
+        metric:
+          name: victory36_pool_utilization_percentage
+          selector:
+            matchLabels:
+              app: victory36-connection-pool
+        target:
+          type: AverageValue
+          averageValue: "75"  # 75% pool utilization
+    
+    # Custom metric: Request queue length
+    - type: Object
+      object:
+        metric:
+          name: victory36_queue_length
+          selector:
+            matchLabels:
+              app: victory36-connection-pool
+        target:
+          type: AverageValue
+          averageValue: "1000"  # Max 1K queued requests per pod
+  
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60  # Quick scale up for agent bursts
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 60
+        - type: Pods
+          value: 10
+          periodSeconds: 60
+      selectPolicy: Max
+    
+    scaleDown:
+      stabilizationWindowSeconds: 300  # Slow scale down to avoid churn
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+      selectPolicy: Min

@@ -1,0 +1,174 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: victory36-connection-pool
+  namespace: victory36
+  annotations:
+    iam.gke.io/gcp-service-account: victory36-mocoa@api-for-warp-drive.iam.gserviceaccount.com
+    asoos.cloud/classification: "diamond-sao"
+  labels:
+    app: victory36-connection-pool
+    classification: diamond-sao
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: victory36-connection-pool
+  namespace: victory36
+  labels:
+    app: victory36-connection-pool
+    version: v1.0.0
+    classification: diamond-sao
+  annotations:
+    asoos.cloud/max-agents: "20000000"
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: victory36-connection-pool
+  template:
+    metadata:
+      labels:
+        app: victory36-connection-pool
+        version: v1.0.0
+        classification: diamond-sao
+    spec:
+      serviceAccountName: victory36-connection-pool
+      
+      # Security context - Diamond SAO requirements
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 3000
+        fsGroup: 2000
+      
+      containers:
+        - name: victory36-connection-pool
+          # Using nginx as placeholder until container image is built
+          image: nginx:alpine
+          imagePullPolicy: Always
+          
+          # Security context for container
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1001
+            runAsGroup: 3000
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - NET_BIND_SERVICE
+          
+          # Resource requirements for 20M agents
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          
+          # Environment variables
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: MAX_AGENTS
+              value: "6666667"  # 20M / 3 regions
+            - name: GOOGLE_CLOUD_PROJECT
+              value: "api-for-warp-drive"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          
+          # Port configuration
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          
+          # Volume mounts
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
+            - name: nginx-run
+              mountPath: /var/run
+      
+      # Volumes
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: nginx-cache
+          emptyDir: {}
+        - name: nginx-run
+          emptyDir: {}
+      
+      # DNS and networking
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: victory36-connection-pool
+  namespace: victory36
+  labels:
+    app: victory36-connection-pool
+    classification: diamond-sao
+  annotations:
+    asoos.cloud/purpose: "victory36-connection-pool-service"
+    cloud.google.com/neg: '{"ingress": true}'
+spec:
+  type: ClusterIP
+  selector:
+    app: victory36-connection-pool
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: victory36-connection-pool-hpa
+  namespace: victory36
+  labels:
+    app: victory36-connection-pool
+    classification: diamond-sao
+  annotations:
+    asoos.cloud/purpose: "20M+ agent connection pool autoscaling"
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: victory36-connection-pool
+  minReplicas: 3
+  maxReplicas: 100
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80

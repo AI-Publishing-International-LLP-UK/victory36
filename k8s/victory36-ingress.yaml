@@ -1,0 +1,162 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: victory36-ssl-cert
+  namespace: victory36
+  labels:
+    app: victory36-connection-pool
+    classification: diamond-sao
+spec:
+  domains:
+    - victory36.api-for-warp-drive.asoos.cloud
+    - victory36-api.api-for-warp-drive.asoos.cloud
+    - ai-agents.api-for-warp-drive.asoos.cloud
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: victory36-loadbalancer
+  namespace: victory36
+  labels:
+    app: victory36-connection-pool
+    classification: diamond-sao
+  annotations:
+    cloud.google.com/load-balancer-type: "External"
+    cloud.google.com/backend-config: '{"default": "victory36-backend-config"}'
+    cloud.google.com/neg: '{"ingress": true}'
+    asoos.cloud/purpose: "victory36-20M-agent-loadbalancer"
+spec:
+  type: LoadBalancer
+  loadBalancerClass: gke.io/l7-gxlb
+  selector:
+    app: victory36-connection-pool
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP
+    - name: https
+      port: 443
+      targetPort: 80
+      protocol: TCP
+---
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: victory36-backend-config
+  namespace: victory36
+  labels:
+    app: victory36-connection-pool
+    classification: diamond-sao
+spec:
+  # Connection draining for graceful shutdowns
+  connectionDraining:
+    drainingTimeoutSec: 60
+  
+  # Session affinity for AI agent persistence
+  sessionAffinity:
+    affinityType: "CLIENT_IP"
+    affinityCookieTtlSec: 3600
+  
+  # Timeout configurations for long-running AI agent connections
+  timeoutSec: 300
+  
+  # Health check configuration
+  healthCheck:
+    checkIntervalSec: 10
+    port: 80
+    type: HTTP
+    requestPath: /health
+    timeoutSec: 5
+    healthyThreshold: 1
+    unhealthyThreshold: 3
+  
+  # Connection pooling for 20M agents
+  customRequestHeaders:
+    headers:
+      - "X-Victory36-Region: us-west1"
+      - "X-Victory36-Classification: diamond-sao"
+      - "X-Victory36-Max-Agents: 20000000"
+  
+  # Security policy
+  securityPolicy:
+    name: "victory36-security-policy"
+  
+  # CDN configuration for static content
+  cdn:
+    enabled: true
+    cachePolicy:
+      includeHost: true
+      includeProtocol: true
+      includeQueryString: false
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: victory36-ingress
+  namespace: victory36
+  labels:
+    app: victory36-connection-pool
+    classification: diamond-sao
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: "victory36-global-ip"
+    networking.gke.io/managed-certificates: "victory36-ssl-cert"
+    kubernetes.io/ingress.class: "gce"
+    cloud.google.com/backend-config: '{"default": "victory36-backend-config"}'
+    cloud.google.com/armor-config: '{"victory36-security-policy": "victory36-security-policy"}'
+    asoos.cloud/purpose: "victory36-20M-agent-ingress"
+    asoos.cloud/max-agents: "20000000"
+spec:
+  rules:
+    - host: victory36.api-for-warp-drive.asoos.cloud
+      http:
+        paths:
+          - path: /*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: victory36-connection-pool
+                port:
+                  number: 80
+    - host: victory36-api.api-for-warp-drive.asoos.cloud
+      http:
+        paths:
+          - path: /api/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: victory36-connection-pool
+                port:
+                  number: 80
+    - host: ai-agents.api-for-warp-drive.asoos.cloud
+      http:
+        paths:
+          - path: /agents/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: victory36-connection-pool
+                port:
+                  number: 80
+          - path: /connect/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: victory36-connection-pool
+                port:
+                  number: 80
+---
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeGlobalAddress
+metadata:
+  name: victory36-global-ip
+  namespace: victory36
+  labels:
+    app: victory36-connection-pool
+    classification: diamond-sao
+  annotations:
+    asoos.cloud/purpose: "victory36-global-static-ip"
+spec:
+  description: "Global static IP for Victory36 AI agent management platform"
+  ipVersion: "IPV4"
+  addressType: "EXTERNAL"

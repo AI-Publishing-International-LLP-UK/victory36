@@ -1,0 +1,22 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: victory36-connection-pool-pdb
+  namespace: victory36
+  labels:
+    app: victory36-connection-pool
+    component: availability
+    classification: diamond-sao
+  annotations:
+    asoos.cloud/purpose: "ensure-victory36-availability-during-disruptions"
+    asoos.cloud/target-agents: "20000000"
+spec:
+  selector:
+    matchLabels:
+      app: victory36-connection-pool
+  
+  # Ensure at least 80% of pods remain available during disruptions
+  minAvailable: "80%"
+  
+  # Alternative: maxUnavailable: "20%"
+  # Use minAvailable to ensure strong availability guarantees for 20M agents
