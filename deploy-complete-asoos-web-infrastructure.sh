@@ -38,7 +38,7 @@ NC='\033[0m' # No Color
 
 # Configuration
 PROJECT_ID=${PROJECT_ID:-"api-for-warp-drive"}
-REGION=${REGION:-"us-west1-a"}
+REGION=${REGION:-"us-west1"}
 CLUSTER_NAME=${CLUSTER_NAME:-"victory36-cluster-mocoa"}
 NAMESPACE=${NAMESPACE:-"asoos-web-infrastructure"}
 
@@ -116,12 +116,7 @@ else
     print_step "Creating GKE Autopilot cluster..."
     gcloud container clusters create-auto $CLUSTER_NAME \
         --region=$REGION \
-        --release-channel=regular \
-        --enable-autoscaling \
-        --enable-autorepair \
-        --enable-autoupgrade \
-        --disk-size=100 \
-        --disk-type=pd-standard
+        --release-channel=regular
 fi
 
 print_step "Getting cluster credentials..."
@@ -176,7 +171,7 @@ fi
 print_section "Building and Pushing Docker Images"
 
 print_step "Building ASOOS Comprehensive Authentication System..."
-cat > Dockerfile.asoos-auth << 'EOF'
+cat > Dockerfile << 'EOF'
 FROM python:3.9-slim
 
 WORKDIR /app
@@ -205,10 +200,10 @@ EXPOSE 8000
 CMD ["python", "-m", "uvicorn", "asoos_comprehensive_auth_system:app", "--host", "0.0.0.0", "--port", "8000"]
 EOF
 
-gcloud builds submit --tag gcr.io/$PROJECT_ID/asoos-comprehensive-auth:latest --file=Dockerfile.asoos-auth .
+gcloud builds submit --tag gcr.io/$PROJECT_ID/asoos-comprehensive-auth:latest .
 
 print_step "Building Cloudflare GenAI Deployment System..."
-cat > Dockerfile.cloudflare-genai << 'EOF'
+cat > Dockerfile << 'EOF'
 FROM python:3.9-slim
 
 WORKDIR /app
@@ -233,10 +228,10 @@ EXPOSE 8003
 CMD ["python", "-m", "uvicorn", "cloudflare_genai_deployment_system:app", "--host", "0.0.0.0", "--port", "8003"]
 EOF
 
-gcloud builds submit --tag gcr.io/$PROJECT_ID/cloudflare-genai-deployment:latest --file=Dockerfile.cloudflare-genai .
+gcloud builds submit --tag gcr.io/$PROJECT_ID/cloudflare-genai-deployment:latest .
 
 print_step "Building MCP Client Onboarding System..."
-cat > Dockerfile.mcp-onboarding << 'EOF'
+cat > Dockerfile << 'EOF'
 FROM python:3.9-slim
 
 WORKDIR /app
@@ -262,7 +257,7 @@ EXPOSE 8004
 CMD ["python", "-m", "uvicorn", "mcp_client_onboarding_automation:app", "--host", "0.0.0.0", "--port", "8004"]
 EOF
 
-gcloud builds submit --tag gcr.io/$PROJECT_ID/mcp-client-onboarding:latest --file=Dockerfile.mcp-onboarding .
+gcloud builds submit --tag gcr.io/$PROJECT_ID/mcp-client-onboarding:latest .
 
 # =================================================================================================
 # KUBERNETES DEPLOYMENT MANIFESTS
@@ -906,6 +901,6 @@ print_success "ASOOS Web Infrastructure deployment completed successfully!"
 print_step "Check deployment status with: kubectl get all -n $NAMESPACE"
 
 # Clean up temporary files
-rm -f Dockerfile.* *.yaml 2>/dev/null || true
+rm -f Dockerfile *.yaml 2>/dev/null || true
 
 exit 0

@@ -1,6 +1,7 @@
 {
   "name": "victory36",
   "version": "1.0.0",
+  "type": "module",
   "description": "Victory36: Advanced AI Agent Ecosystem Management Platform for 20M+ concurrent agents",
   "main": "src/victory36-connection-pool-manager.js",
   "scripts": {

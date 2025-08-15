@@ -55,8 +55,8 @@ import uvicorn
 from motor.motor_asyncio import AsyncIOMotorClient
 import certifi
 import smtplib
-from email.mime.text import MimeText
-from email.mime.multipart import MimeMultipart
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -876,12 +876,12 @@ class MCPClientOnboardingSystem:
             return
         
         try:
-            msg = MimeMultipart('alternative')
+            msg = MIMEMultipart('alternative')
             msg['From'] = self.email_username
             msg['To'] = to_email
             msg['Subject'] = subject
             
-            html_part = MimeText(html_body, 'html')
+            html_part = MIMEText(html_body, 'html')
             msg.attach(html_part)
             
             server = smtplib.SMTP(self.smtp_server, self.smtp_port)

@@ -97,8 +97,8 @@ class Role(str, Enum):
 
 # Configuration from environment variables
 class Config:
-    # Database Configuration
-    MONGODB_URI = os.getenv("MONGODB_URI", "mongodb+srv://username:password@cluster.mongodb.net/")
+    # Database Configuration - No default URI for security
+    MONGODB_URI = os.getenv("MONGODB_URI")
     DATABASE_NAME = os.getenv("DATABASE_NAME", "hr_ai_crms_system")
     
     # Security Configuration
@@ -699,10 +699,14 @@ templates = Jinja2Templates(directory="templates")
 async def startup_event():
     """Application startup - connect to database and initialize"""
     try:
-        # Only connect to MongoDB if URI is properly configured
-        if not config.MONGODB_URI or "username:password" in config.MONGODB_URI:
-            logger.warning("⚠️  MongoDB URI not configured - running in demo mode")
+        # Validate MongoDB URI configuration
+        if not config.MONGODB_URI:
+            logger.warning("⚠️  MONGODB_URI environment variable not set - running in demo mode")
             logger.info("💡 Set MONGODB_URI environment variable to enable full functionality")
+            logger.info("💡 Example: MONGODB_URI='mongodb+srv://user:pass@cluster.mongodb.net/dbname'")
+        elif "username:password" in config.MONGODB_URI:
+            logger.error("❌ MONGODB_URI contains placeholder credentials - this is a security issue!")
+            logger.info("💡 Update MONGODB_URI with real credentials from MongoDB Atlas")
         else:
             await db_manager.connect()
             await initialize_seed_data()
