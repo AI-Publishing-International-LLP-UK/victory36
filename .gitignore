@@ -278,3 +278,19 @@ audit-reports/
 !.gitkeep
 !README.md
 !VICTORY36-CONCEPT.md
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Docker demo files
+Dockerfile.demo
+*.dockerfile.temp
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
