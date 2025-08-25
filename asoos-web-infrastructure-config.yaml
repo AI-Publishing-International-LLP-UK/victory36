@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: asoos-web-config
+  namespace: asoos-web-infrastructure
+data:
+  PROJECT_ID: "api-for-warp-drive"
+  REGION: "us-west1"
+  ASOOS_DB_NAME: "asoos_comprehensive"
+  MCP_ONBOARDING_DB: "mcp_onboarding"
+  SALLYPORT_ENDPOINT: "https://Client.2100.COOL/MCP"
+  ASOOS_AUTH_ENDPOINT: "http://asoos-auth-service:8000"
+  MCP_MASTER_ENDPOINT: "http://mcp-onboarding-service:8004"
+  CLOUDFLARE_GENAI_ENDPOINT: "http://cloudflare-genai-service:8003"
+  
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: asoos-web-secrets
+  namespace: asoos-web-infrastructure
+type: Opaque
+stringData:
+  MONGODB_URI: "mongodb://mongodb-service:27017/asoos_production"
+  ASOOS_SECRET_KEY: "asoos-secret-key-placeholder"
+  CLOUDFLARE_API_TOKEN: "cloudflare-token-placeholder"
+  CLOUDFLARE_ACCOUNT_ID: "cloudflare-account-placeholder"
+  EMAIL_USERNAME: "notifications@aixtiv.com"
+  EMAIL_PASSWORD: "email-password-placeholder"
+  SMTP_SERVER: "smtp.gmail.com"
+  SMTP_PORT: "587"

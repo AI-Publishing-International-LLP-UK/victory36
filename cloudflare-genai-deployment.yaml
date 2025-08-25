@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudflare-genai-deployment
+  namespace: asoos-web-infrastructure
+  labels:
+    app: cloudflare-genai
+    tier: website-deployment
+    classification: diamond-sao
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloudflare-genai
+  template:
+    metadata:
+      labels:
+        app: cloudflare-genai
+        tier: website-deployment
+    spec:
+      containers:
+      - name: cloudflare-genai
+        image: gcr.io/api-for-warp-drive/cloudflare-genai-deployment:latest
+        ports:
+        - containerPort: 8003
+        env:
+        - name: CLOUDFLARE_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: asoos-web-secrets
+              key: CLOUDFLARE_API_TOKEN
+        - name: CLOUDFLARE_ACCOUNT_ID
+          valueFrom:
+            secretKeyRef:
+              name: asoos-web-secrets
+              key: CLOUDFLARE_ACCOUNT_ID
+        - name: MCP_MASTER_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: asoos-web-config
+              key: MCP_MASTER_ENDPOINT
+        - name: SALLYPORT_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: asoos-web-config
+              key: SALLYPORT_ENDPOINT
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8003
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8003
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudflare-genai-service
+  namespace: asoos-web-infrastructure
+  labels:
+    app: cloudflare-genai
+spec:
+  selector:
+    app: cloudflare-genai
+  ports:
+  - port: 8003
+    targetPort: 8003
+    protocol: TCP
+  type: ClusterIP
